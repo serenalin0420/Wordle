@@ -1,8 +1,8 @@
-import { useReducer, useEffect, useState } from "react";
+import { useReducer, useEffect } from "react";
 
 function Board() {
   const initialState = {
-    answer: "",
+    answer: "REACT",
     guess: ["", "", "", "", ""],
     currentGuess: 0,
   };
@@ -42,7 +42,14 @@ function Board() {
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
+      if (state.guess.every((letter) => letter !== "")) {
+        console.log("check if its the ans");
+        // dispatch({type: "RESET", })
+      } else {
+        console.log("Not enough letters");
+      }
       console.log(state.guess);
+      // 當五個字母都輸入完成，換行(處理判斷: 錯誤顯示灰色、有此字母顯示黃色、有字母且位置正確顯示綠色)
     } else if (e.key === "Backspace") {
       dispatch({ type: "REMOVE_LETTER" });
     } else if (/^[a-zA-Z]$/.test(e.key)) {
