@@ -4,6 +4,7 @@ const initialState = {
   answer: "DELAY",
   guesses: Array(6).fill(["", "", "", "", ""]),
   currentGuess: 0,
+  result: Array(6).fill(["white", "white", "white", "white", "white"]),
 };
 
 function guessReducer(state, action) {
@@ -48,7 +49,7 @@ function guessReducer(state, action) {
       if (guesses[currentGuess].every((letter) => letter !== "")) {
         const ansArray = answer.split("");
         const currentRow = guesses[currentGuess];
-        const result = [];
+        const result = Array(5).fill("white");
 
         // First pass for greens (correct letter in correct position)
         currentRow.forEach((letter, index) => {
@@ -60,15 +61,20 @@ function guessReducer(state, action) {
 
         // Second pass for yellows (correct letter in wrong position)
         currentRow.forEach((letter, index) => {
-          if (!result[index]) {
-            if (ansArray.includes(letter)) {
-              result[index] = "yellow"; // Mark as yellow
-              ansArray[ansArray.indexOf(letter)] = null; // Remove the letter from ansArray
-            } else {
-              result[index] = "gray"; // Mark as gray
-            }
+          if (result[index] === "white" && ansArray.includes(letter)) {
+            result[index] = "yellow";
+            ansArray[ansArray.indexOf(letter)] = null; // Remove the letter from ansArray
           }
         });
+
+        currentRow.forEach((index) => {
+          if (result[index] === "white") {
+            result[index] = "gray";
+          }
+        });
+        // Update the result in the state
+        const updatedResults = [...state.result];
+        updatedResults[currentGuess] = result;
 
         // If all letters are green, the game ends
         const isCorrect = result.every((color) => color === "green");
@@ -76,8 +82,8 @@ function guessReducer(state, action) {
         return {
           ...state,
           currentGuess: isCorrect ? currentGuess : currentGuess + 1,
-          guesses: isCorrect ? guesses : [...guesses], // Optionally store results
-          result, // Optionally store the result to display colors
+          guesses: isCorrect ? guesses : [...guesses],
+          result: updatedResults, // Update the result array with the current row result
         };
       } else {
         console.log("Not enough letters");
@@ -91,17 +97,17 @@ function guessReducer(state, action) {
       return state;
   }
 }
-function getBackgroundColor(state, rowIndex, colIndex) {
-  const bgColor =
-    state.result && state.result[rowIndex]
-      ? state.result[rowIndex][colIndex]
-      : "border-gray-400"; // Default border color if no result
-
-  return bgColor === "green"
-    ? "bg-green-500 border-green-500"
-    : bgColor === "yellow"
-      ? "bg-yellow-500 border-yellow-500"
-      : "bg-gray-300 border-gray-400"; // Default to gray
+function getClassName(color) {
+  switch (color) {
+    case "green":
+      return "bg-lime-600 border-lime-600 text-white";
+    case "yellow":
+      return "bg-yellow-500 border-yellow-500 text-white";
+    case "gray":
+      return "bg-gray-500 border-gray-500 text-white";
+    default:
+      return "bg-gray-200 border-gray-200 ";
+  }
 }
 
 function Board() {
@@ -133,12 +139,11 @@ function Board() {
       {state.guesses?.map((guess, rowIndex) => (
         <div key={rowIndex} className="grid grid-cols-5 items-center gap-2">
           {guess.map((letter, colIndex) => {
-            const bgClass = getBackgroundColor(state, rowIndex, colIndex);
-            console.log(bgClass);
+            const bgClass = getClassName(state.result[rowIndex][colIndex]);
             return (
               <div
                 key={colIndex}
-                className={`flex h-14 w-14 items-center justify-center border-2 text-2xl font-bold uppercase ${bgClass}`}
+                className={`flex h-14 w-14 items-center justify-center rounded border-2 text-2xl font-bold uppercase ${bgClass}`}
               >
                 {letter}
               </div>
