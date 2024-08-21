@@ -10,7 +10,6 @@ const initialState = {
 function guessReducer(state, action) {
   switch (action.type) {
     case "INPUT_LETTER": {
-      console.log(state);
       const { currentGuess } = state;
       const emptyIndex = state.guesses[currentGuess].findIndex(
         (letter) => letter === "",
@@ -51,48 +50,45 @@ function guessReducer(state, action) {
         const currentRow = guesses[currentGuess];
         const result = Array(5).fill("white");
 
-        // First pass for greens (correct letter in correct position)
         currentRow.forEach((letter, index) => {
           if (ansArray[index] === letter) {
-            result[index] = "green"; // Mark as green
-            ansArray[index] = null; // Remove the letter from ansArray to avoid double counting
+            result[index] = "green";
+            ansArray[index] = null;
           }
         });
 
-        // Second pass for yellows (correct letter in wrong position)
         currentRow.forEach((letter, index) => {
           if (result[index] === "white" && ansArray.includes(letter)) {
             result[index] = "yellow";
-            ansArray[ansArray.indexOf(letter)] = null; // Remove the letter from ansArray
+            ansArray[ansArray.indexOf(letter)] = null;
           }
         });
 
-        currentRow.forEach((index) => {
+        currentRow.forEach((letter, index) => {
           if (result[index] === "white") {
             result[index] = "gray";
           }
         });
-        // Update the result in the state
+
         const updatedResults = [...state.result];
         updatedResults[currentGuess] = result;
 
-        // If all letters are green, the game ends
         const isCorrect = result.every((color) => color === "green");
 
         return {
           ...state,
           currentGuess: isCorrect ? currentGuess : currentGuess + 1,
           guesses: isCorrect ? guesses : [...guesses],
-          result: updatedResults, // Update the result array with the current row result
+          result: updatedResults,
         };
       } else {
         console.log("Not enough letters");
       }
       return state;
     }
-
     case "RESET":
       return initialState;
+
     default:
       return state;
   }
@@ -127,8 +123,23 @@ function Board() {
   }, []);
 
   useEffect(() => {
-    window.addEventListener("keydown", handleKeyDown);
+    console.log("check result");
+    console.log(state.result, state.currentGuess);
+    if (state.result[state.currentGuess]?.every((color) => color === "green")) {
+      setTimeout(() => {
+        alert("phew");
+        dispatch({ type: "RESET" });
+      }, 400);
+    } else if (state.currentGuess === 6) {
+      setTimeout(() => {
+        alert("次數已過，明天再戰");
+        dispatch({ type: "RESET" });
+      }, 400);
+    }
+  }, [state.result, state.currentGuess]);
 
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
