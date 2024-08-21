@@ -1,12 +1,33 @@
 import { useReducer, useEffect, useCallback } from "react";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../firebaseConfig";
+// import SnackbarContent from "@mui/material/SnackbarContent";
+
+const getWordleAns = async () => {
+  const docRef = doc(db, "wordle", "I2jy5FeXj4iF3FBgabIG");
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    const words = docSnap.data().words;
+    if (words && words.length > 0) {
+      const randomIndex = Math.floor(Math.random() * words.length);
+      const randomWord = await words[randomIndex].toUpperCase();
+      return randomWord;
+    } else {
+      console.log("找不到單字");
+    }
+  } else {
+    console.log("cannot find doc");
+  }
+};
 
 const initialState = {
-  answer: "DELAY",
+  answer: await getWordleAns(),
   guesses: Array(6).fill(["", "", "", "", ""]),
   currentGuess: 0,
   result: Array(6).fill(["white", "white", "white", "white", "white"]),
 };
-
+console.log(initialState.answer);
 function guessReducer(state, action) {
   switch (action.type) {
     case "INPUT_LETTER": {
@@ -87,7 +108,10 @@ function guessReducer(state, action) {
       return state;
     }
     case "RESET":
-      return initialState;
+      return {
+        ...initialState,
+        answer: action.newWord,
+      };
 
     default:
       return state;
@@ -125,18 +149,23 @@ function Board() {
     },
     [state.currentGuess],
   );
+  const resetGame = async () => {
+    const newWord = await getWordleAns();
+    console.log(newWord);
+    dispatch({ type: "RESET", newWord });
+  };
 
   useEffect(() => {
     if (state.result[state.currentGuess]?.every((color) => color === "green")) {
       setTimeout(() => {
         alert("phew");
-        dispatch({ type: "RESET" });
+        resetGame();
       }, 400);
     } else if (state.currentGuess === 6) {
       console.log(state.currentGuess);
       setTimeout(() => {
         alert("次數已過，明天再戰");
-        dispatch({ type: "RESET" });
+        resetGame();
       }, 400);
     }
   }, [state.result, state.currentGuess]);
