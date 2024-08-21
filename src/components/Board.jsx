@@ -109,28 +109,31 @@ function getClassName(color) {
 function Board() {
   const [state, dispatch] = useReducer(guessReducer, initialState);
 
-  const handleKeyDown = useCallback((e) => {
-    if (e.key === "Enter") {
-      dispatch({ type: "SUBMIT" });
-    } else if (e.key === "Backspace") {
-      dispatch({ type: "REMOVE_LETTER" });
-    } else if (/^[a-zA-Z]$/.test(e.key)) {
-      dispatch({
-        type: "INPUT_LETTER",
-        letter: e.key.toUpperCase(),
-      });
-    }
-  }, []);
+  const handleKeyDown = useCallback(
+    (e) => {
+      if (state.currentGuess === 6) return;
+      if (e.key === "Enter") {
+        dispatch({ type: "SUBMIT" });
+      } else if (e.key === "Backspace") {
+        dispatch({ type: "REMOVE_LETTER" });
+      } else if (/^[a-zA-Z]$/.test(e.key)) {
+        dispatch({
+          type: "INPUT_LETTER",
+          letter: e.key.toUpperCase(),
+        });
+      }
+    },
+    [state.currentGuess],
+  );
 
   useEffect(() => {
-    console.log("check result");
-    console.log(state.result, state.currentGuess);
     if (state.result[state.currentGuess]?.every((color) => color === "green")) {
       setTimeout(() => {
         alert("phew");
         dispatch({ type: "RESET" });
       }, 400);
     } else if (state.currentGuess === 6) {
+      console.log(state.currentGuess);
       setTimeout(() => {
         alert("次數已過，明天再戰");
         dispatch({ type: "RESET" });
